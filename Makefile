@@ -7,7 +7,7 @@
 # --- Configuration ---
 TARGET      := build/main
 SRC         := src/main.asm
-OBJ         := build/$(TARGET).o
+OBJ         := $(TARGET).o
 BIN         := $(TARGET)
 ARCH        ?= 64
 NASM        := nasm
