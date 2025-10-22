@@ -1,19 +1,30 @@
-section .text
-global _start
+section .data
+  time_val dq 0
+  buffer db 16 dup(0)
 
-%define system_call int 0x80
+section .text
+  global _start
+  extern convert_int_to_str
+  extern log
 
 _start:
-    mov ebx, 0x1
-    mov ecx, hello
-    mov edx, helloLen
-    mov eax, 0x4
-    system_call
+  mov rax, 201
+  lea rdi, [rel time_val]
+  syscall
 
-    xor ebx, ebx
-    mov eax, 0x1
-    system_call
+  mov rax, [time_val]
 
-section .data
-    hello db "Hello World", 0xa
-    helloLen equ $-hello
+  ; int->str
+  lea rsi, [rel buffer + 15] ; param 1
+  call convert_int_to_str
+
+  ; add newline to buffer
+  lea rsi, [rel buffer + 15]
+  mov byte [rsi], 10
+  dec rsi
+
+  call log
+
+  mov rax, 60
+  xor rdi, rdi
+  syscall

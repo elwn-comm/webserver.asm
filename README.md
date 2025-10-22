@@ -1,70 +1,108 @@
-# 🧠 Simple Webserver in Assembly
+# Simple Webserver in Assembly
 
-A minimal web server written in **x86-64 Assembly**, designed for learning low-level network programming concepts.
-This project demonstrates how to handle basic TCP connections and serve simple HTTP responses — all without using a high-level language.
-
-> 📚 For detailed explanations and references, see [RESOURCES.md](./RESOURCES.md).
+A minimal HTTP web server written entirely in **x86-64 Assembly**, demonstrating low-level network programming using Linux syscalls.
+The project shows how to create sockets, handle TCP connections, and send HTTP responses without relying on any high-level language or standard library.
 
 ---
 
-## ⚙️ Installation & Usage
+## Installation and Usage
 
-You can build and run this project inside a Docker container.
-This ensures a consistent environment across systems — no need to install assembler or linker tools manually.
+This project uses **CMake** for modular multi-file builds and **Docker** for a reproducible development environment.
+You do not need to install NASM or other build tools locally.
 
-### 1️⃣ Build the Docker Image
+---
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/webserverasm.git
+cd webserverasm
+```
+
+---
+
+### 2. Build the Docker Image
 
 ```bash
 docker build -t webserverasm .
 ```
 
-This command compiles the base environment and prepares the container for development.
+This creates an isolated environment containing NASM, LD, CMake, and all required dependencies.
 
 ---
 
-### 2️⃣ Run the Container
+### 3. Run the Development Container
 
 ```bash
 docker run -it -v ./:/home/dev/app webserverasm
 ```
 
-This mounts your current directory (`./`) into the container’s workspace and starts an **interactive shell** inside it.
+This command mounts your current directory (`./`) into the container at `/home/dev/app`
+and opens an interactive shell where you can build and run the project.
 
 ---
 
-### 3️⃣ Build & Run the Webserver
+### 4. Configure and Build with CMake
 
-Once inside the container shell, use `make` to build and execute the program:
+Inside the container, run:
 
 ```bash
-make run
+cmake -S . -B build
+cmake --build build
 ```
 
-This command:
+Alternatively, you can use the short form:
 
-* Assembles the source files.
-* Links the binary.
-* Runs the server inside the container.
+```bash
+cmake -B build && cmake --build build
+```
 
----
-
-## 🧩 Notes
-
-* All build commands are defined in the `Makefile`.
-* You can modify the source code in your local directory; changes are automatically reflected inside the container.
-* For debugging or learning, explore the `.asm` source files and experiment with syscall behaviors.
+This assembles all `.asm` source files, links them, and produces the `webserver` binary in the `build/` directory.
 
 ---
 
-## 🧰 Requirements
+### 5. Run the Webserver
 
-* Docker (version ≥ 24.x recommended)
-* `make` (optional on host, used inside container)
-* Basic understanding of Assembly syntax (NASM preferred)
+After a successful build:
+
+```bash
+./build/webserver
+```
+
+In another terminal, test the server with:
+
+```bash
+curl http://localhost:8080
+```
+
+Expected response:
+
+```copy
+Hello, world!
+```
 
 ---
 
-## 🪪 License
+### 6. Clean Build Files
+
+To remove all compiled artifacts:
+
+```bash
+rm -rf build
+```
+
+---
+
+## Requirements
+
+* Docker ≥ 24.x
+* CMake ≥ 3.20 (already installed in container)
+* NASM assembler
+* Basic understanding of x86-64 Assembly and Linux syscalls
+
+---
+
+## License
 
 This project is released under the **MIT License**.
-Feel free to use, modify, and share it for educational purposes.
+You may use, modify, and distribute it for educational or research purposes.

@@ -1,11 +1,28 @@
+# ============================================================
+# Arch Linux Assembly Development Environment
+# Base: archlinux:multilib-devel
+# Tools: NASM, LD, GCC, GDB, LLDB, CMake, Make
+# Maintainer: elwnc
+# ============================================================
+
 FROM archlinux:multilib-devel-20251012.0.434149
 
 LABEL maintainer="elwnc" \
-      description="Arch Linux environment for Assembly development (NASM, GCC, GDB, etc.)"
+      description="Arch Linux environment for Assembly (NASM, GCC, GDB, CMake, etc.)"
 
-WORKDIR /app
+# Set up non-root user
+ARG USERNAME=dev
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-RUN pacman -Syu --noconfirm && \
+# Create working directory
+WORKDIR /home/${USERNAME}/app
+
+# Update base system and install essential tools with reliable mirrors
+RUN sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist && \
+    pacman -Sy --noconfirm reflector && \
+    reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist && \
+    pacman -Syu --noconfirm || true && \
     pacman -S --noconfirm \
         base-devel \
         nasm \
@@ -13,38 +30,40 @@ RUN pacman -Syu --noconfirm && \
         gcc \
         gdb \
         make \
+        cmake \
+        lldb \
+        strace \
         vim \
         git \
+        python \
         sudo \
-        man-pages \
         man-db \
+        man-pages \
         less \
         util-linux \
-        multilib-devel \
-        strace \
-        lldb \
-        python \
         which && \
-    pacman -Scc --noconfirm
+    pacman -Scc --noconfirm && \
+    rm -rf /var/cache/pacman/pkg/* /tmp/*
 
-ARG USERNAME=dev
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME && \
-    useradd --uid $USER_UID --gid $USER_GID -m -s /bin/bash $USERNAME && \
-    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+# Create user and give passwordless sudo
+RUN groupadd --gid ${USER_GID} ${USERNAME} && \
+    useradd --uid ${USER_UID} --gid ${USER_GID} -m -s /bin/bash ${USERNAME} && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME} && \
+    chmod 0440 /etc/sudoers.d/${USERNAME}
 
-USER $USERNAME
-WORKDIR /home/$USERNAME/app
+USER ${USERNAME}
 
-ENV LANG=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV PATH="/home/$USERNAME/.local/bin:$PATH"
+# Locale and PATH configuration
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
-RUN echo "Assembly dev environment ready." && \
+# Quick sanity check
+RUN echo "Assembly development environment ready." && \
     nasm -v && \
     gcc --version && \
-    gdb --version
+    gdb --version && \
+    cmake --version
 
 CMD ["/bin/bash"]
